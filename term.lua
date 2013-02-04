@@ -75,8 +75,6 @@ function ErrorTerm:initialize(term)
 	}
 end
 
-
-
 GridTerm=class'GridTerm'
 function GridTerm:initialize(X,Y,isColor)
 	local matrix={}
@@ -325,6 +323,8 @@ function TransformTerm:initialize(term,X,Y,dx,dy)
 		}
 end
 
+
+
 local term_actions={
 'write',
 'scroll',
@@ -341,8 +341,15 @@ local term_passive={
 'isColor',
 }
 
+
+
 WindowTerm=class'WindowTerm'
-function WindowTerm:initialize(term,saveTerm)
+do
+
+function WindowTerm:initialize(term,X,Y,dx,dy)
+	local saveTerm=GridTerm(X,Y,term.isColor())
+	term = TransformTerm(term,X,Y,dx,dy).term
+	
 	self.dest=term
 	local term=shcopy(self.dest)
 	term.scroll=function(n)
@@ -366,19 +373,21 @@ function WindowTerm:initialize(term,saveTerm)
 		self.term[v]=s_term[v]
 	end
 	self.saveTerm=saveTerm
+	
+	self.term = ErrorTerm(self.term).term
 end
 
 function WindowTerm:draw()
 	return self.saveTerm:draw(self.dest)
 end
 
-function WindowTerm:activate()
+local function activate(self)
 	self.saveTerm:draw(self.dest)
 	copyState(self.saveTerm.term,self.dest)
 	self.active=true
 end
 
-function WindowTerm:setState(bool)
+function WindowTerm:setActive(bool)
 	if bool~=self.active then
 		if bool then
 			self:activate()
@@ -388,12 +397,17 @@ function WindowTerm:setState(bool)
 	end
 end
 
-Window=class('Window',WindowTerm)
-function Window:initialize(term,X,Y,dx,dy)
-	WindowTerm.initialize(self,TransformTerm(term,X,Y,dx,dy).term,GridTerm(X,Y,term.isColor()))
-	
-	self.term = ErrorTerm(self.term).term
 end
+
+
+
+-- Window=class('Window',WindowTerm)
+-- function Window:initialize(term,X,Y,dx,dy)
+	-- WindowTerm.initialize(self,TransformTerm(term,X,Y,dx,dy).term,GridTerm(X,Y,term.isColor()))
+	-- self.term = ErrorTerm(self.term).term
+-- end
+
+
 
 
 local PipeTerm={}
